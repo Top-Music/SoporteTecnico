@@ -1,0 +1,101 @@
+package com.zegel.users.users.service;
+
+import com.zegel.users.users.dto.CreateUserRequest;
+import com.zegel.users.users.dto.LoginRequest;
+import com.zegel.users.users.dto.LoginResponse;
+import com.zegel.users.users.dto.UserResponse;
+import com.zegel.users.users.exception.EmailAlreadyExistsException;
+import com.zegel.users.users.exception.InvalidCredentialsException;
+import com.zegel.users.users.exception.ResourceNotFoundException;
+import com.zegel.users.users.model.Role;
+import com.zegel.users.users.model.User;
+import com.zegel.users.users.repository.RoleRepository;
+import com.zegel.users.users.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+            .orElseThrow(InvalidCredentialsException::new);
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException();
+        }
+
+        String token = jwtService.generateToken(user);
+        Set<String> roleNames = user.getRoles().stream()
+            .map(Role::getName)
+            .collect(Collectors.toSet());
+
+        log.info("User logged in: {}", user.getEmail());
+
+        return LoginResponse.builder()
+            .id(user.getId())
+            .email(user.getEmail())
+            .firstName(user.getFirstName())
+            .lastName(user.getLastName())
+            .token(token)
+            .roles(roleNames)
+            .build();
+    }
+
+    @Transactional
+    public UserResponse createUser(CreateUserRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException(request.getEmail());
+        }
+
+        Set<Role> roles = request.getRoleNames().stream()
+            .map(roleName -> roleRepository.findByName(roleName)
+                .orElseThrow(() -> new ResourceNotFoundException("Role", roleName)))
+            .collect(Collectors.toSet());
+
+        User user = User.builder()
+            .email(request.getEmail())
+            .firstName(request.getFirstName())
+            .lastName(request.getLastName())
+            .password(passwordEncoder.encode(request.getPassword()))
+            .isActive(true)
+            .roles(roles)
+            .build();
+
+        User savedUser = userRepository.save(user);
+        log.info("User created: {}", savedUser.getEmail());
+
+        return mapToUserResponse(savedUser);
+    }
+
+    private UserResponse mapToUserResponse(User user) {
+        Set<String> roleNames = user.getRoles().stream()
+            .map(Role::getName)
+            .collect(Collectors.toSet());
+
+        return UserResponse.builder()
+            .id(user.getId())
+            .email(user.getEmail())
+            .firstName(user.getFirstName())
+            .lastName(user.getLastName())
+            .isActive(user.getIsActive())
+            .roles(roleNames)
+            .fechaCreacion(user.getFechaCreacion())
+            .fechaActualizacion(user.getFechaActualizacion())
+            .build();
+    }
+}

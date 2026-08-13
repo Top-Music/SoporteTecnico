@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Microservicios</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Microservicios</p>
+        <h1>Sistema de Usuarios y Solicitudes</h1>
+        <p>Interfaz sencilla para probar login, roles y solicitudes sin frameworks.</p>
+      </div>
+      <div class="status-card">
+        <span>Usuarios API</span>
+        <strong id="usersStatus">8083 listo</strong>
+        <span>Solicitudes API</span>
+        <strong id="solStatus">8084 listo</strong>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="panel">
+        <h2>Login</h2>
+        <p>Usa tu correo y contraseña para obtener el JWT.</p>
+        <form id="loginForm" class="form">
+          <label>
+            <span>Email</span>
+            <input type="email" id="email" placeholder="admin@prueba.com" required />
+          </label>
+          <label>
+            <span>Contraseña</span>
+            <input type="password" id="password" placeholder="123456" required />
+          </label>
+          <button type="submit">Iniciar sesión</button>
+        </form>
+        <pre id="loginResult" class="output"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>Acciones</h2>
+        <div class="actions">
+          <button id="btnRoles" type="button">Cargar roles</button>
+          <button id="btnUsers" type="button">Registrar usuario demo</button>
+          <button id="btnRequest" type="button">Crear solicitud demo</button>
+          <button id="btnMyRequests" type="button">Ver mis solicitudes</button>
+        </div>
+        <pre id="actionResult" class="output"></pre>
+      </section>
+
+      <section class="panel full">
+        <h2>Roles</h2>
+        <div id="rolesList" class="cards"></div>
+      </section>
+
+      <section class="panel full">
+        <h2>Solicitudes</h2>
+        <div id="requestsList" class="cards"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
